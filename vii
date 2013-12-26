@@ -1,0 +1,84 @@
+#!/bin/sh
+#target dir
+target=/root/bak
+
+#get lastchar
+function lastchar(){
+
+if [ -z "$1" ];then
+	#empty string
+	rval=""
+	return
+fi
+
+numofchar=`echo -n "$1"|wc -c|sed 's/ //g'`
+rval=`echo -n "$1"|cut -b $numofchar`
+
+}
+#function to handle dir
+function  ergodic(){
+if [ -d "$1" ];then
+	
+	for file  in ` ls $1 `
+	do		
+		if [ -d $1"/"$file ];then
+			if [ -d $2"/"$file ];then
+			echo "$2/$file exits"
+			else 
+			mkdir -p $2"/"$file
+			fi
+		ergodic $1"/"$file $2"/"$file
+		else
+		local src_path=$1"/"$file
+		local tar_path=$2"/"$file
+		cp $src_path $tar_path
+		echo "cp $src_path $tar_path"
+		fi
+	done
+fi
+}
+
+#/root/bak target dir make
+if [ -d "$target" ];then
+echo "$target exits"
+else
+mkdir $target
+chmod a+w $target
+
+fi
+
+datenow=`date +%y%m%d`
+timenow=`date +%H%M%S`
+
+#$1 is dir,
+if [ -d "$1" ];then
+	tar_path1=` basename $1 `
+	tar_path=$target"/"$tar_path1"_"$datenow"_"$timenow
+	if [ -d "$tar_path" ];then
+	echo "$tar_path exits"
+	else
+		mkdir -p $tar_path
+		chmod a+w $tar_path
+	fi
+	lastchar $1
+	if [ "$rval" = "/" ];then
+		numofchar1=` expr $numofchar "-" 1 `
+		rval=` echo -n "$1"|cut -b -${numofchar1} `
+		ergodic $rval $tar_path
+	fi
+	else
+	ergodic $1 $tar_path
+fi
+
+#copy $1 to /root/bak
+if [ -f "$1" ];then
+file_name=` basename $1 `
+tar_path=$target"/"$datenow"_"$timenow"_"$file_name
+src_path=$target"/"$file_name
+#echo $src_path
+cp $1 $target
+chmod a+x $src_path
+mv $src_path $tar_path
+echo "cp $1 $target"
+echo "mv $src_path $tar_path"
+fi
